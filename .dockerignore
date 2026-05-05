@@ -1,0 +1,13 @@
+.git
+.env
+.env.local
+.env.*.local
+vendor/
+tools/*/vendor/
+runtime/
+web/assets/
+docs/
+*.log
+.DS_Store
+.idea/
+.vscode/

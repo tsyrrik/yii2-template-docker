@@ -51,6 +51,8 @@ ARG HOST_GID=1000
 
 RUN install-php-extensions xdebug
 
+COPY docker/php/conf/xdebug.ini /usr/local/etc/php/conf.d/zz-xdebug.ini
+
 RUN groupmod -o -g "${HOST_GID}" www-data \
  && usermod -o -u "${HOST_UID}" -g "${HOST_GID}" www-data \
  && mkdir -p /tmp/composer \
@@ -80,8 +82,8 @@ COPY . ./
 
 RUN composer dump-autoload --classmap-authoritative --no-dev && \
     mkdir -p runtime/logs runtime/cache web/assets && \
-    chmod -R 777 runtime web/assets && \
-    php yii help > /dev/null
+    chmod -R 755 runtime web/assets && \
+    php yii help
 
 
 # === Production runtime image ===

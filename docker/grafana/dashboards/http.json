@@ -1,0 +1,14 @@
+{
+  "title": "HTTP Logs",
+  "uid": "http-logs",
+  "schemaVersion": 38,
+  "panels": [
+    {
+      "type": "logs",
+      "title": "Nginx logs",
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"expr": "{compose_service=\"nginx\"}"}],
+      "gridPos": {"x": 0, "y": 0, "w": 24, "h": 10}
+    }
+  ]
+}

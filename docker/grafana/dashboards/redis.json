@@ -1,0 +1,21 @@
+{
+  "title": "Redis Overview",
+  "uid": "redis-overview",
+  "schemaVersion": 38,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Redis Up",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{"expr": "redis_up", "legendFormat": "up"}],
+      "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4}
+    },
+    {
+      "type": "timeseries",
+      "title": "Connected Clients",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{"expr": "redis_connected_clients", "legendFormat": "clients"}],
+      "gridPos": {"x": 6, "y": 0, "w": 18, "h": 8}
+    }
+  ]
+}

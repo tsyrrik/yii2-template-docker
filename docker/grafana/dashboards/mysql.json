@@ -1,0 +1,21 @@
+{
+  "title": "MySQL Overview",
+  "uid": "mysql-overview",
+  "schemaVersion": 38,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "MySQL Up",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{"expr": "mysql_up", "legendFormat": "up"}],
+      "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4}
+    },
+    {
+      "type": "timeseries",
+      "title": "Queries per second",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{"expr": "rate(mysql_global_status_queries[5m])", "legendFormat": "qps"}],
+      "gridPos": {"x": 6, "y": 0, "w": 18, "h": 8}
+    }
+  ]
+}

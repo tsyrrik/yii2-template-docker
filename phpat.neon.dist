@@ -1,0 +1,22 @@
+includes:
+    - tools/phpat/vendor/phpat/phpat/extension.neon
+
+parameters:
+    level: 0
+    paths:
+        - controllers
+        - jobs
+        - tests/Architecture
+    bootstrapFiles:
+        - vendor/autoload.php
+        - vendor/yiisoft/yii2/Yii.php
+    phpat:
+        ignore_doc_comments: true
+        ignore_built_in_classes: true
+        show_rule_names: true
+
+services:
+    -
+        class: tests\Architecture\LayerBoundariesTest
+        tags:
+            - phpat.test

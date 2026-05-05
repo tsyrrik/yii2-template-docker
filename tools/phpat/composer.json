@@ -1,0 +1,5 @@
+{
+    "require": {
+        "phpat/phpat": "^0.10"
+    }
+}

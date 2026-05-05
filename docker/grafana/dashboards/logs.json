@@ -1,0 +1,14 @@
+{
+  "title": "Application Logs",
+  "uid": "application-logs",
+  "schemaVersion": 38,
+  "panels": [
+    {
+      "type": "logs",
+      "title": "Container logs",
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"expr": "{compose_project=\"yii2-template-docker\"}"}],
+      "gridPos": {"x": 0, "y": 0, "w": 24, "h": 10}
+    }
+  ]
+}

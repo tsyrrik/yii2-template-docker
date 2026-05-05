@@ -1,0 +1,18 @@
+parameters:
+    level: 3
+    parallel:
+        maximumNumberOfProcesses: 1
+    paths:
+        - controllers
+        - models
+        - jobs
+        - commands
+    excludePaths:
+        - vendor
+        - runtime
+        - tools
+    bootstrapFiles:
+        - vendor/autoload.php
+        - vendor/yiisoft/yii2/Yii.php
+    ignoreErrors:
+        - '#Access to an undefined property yii\\(console|web)\\Application.*::\$queue#'

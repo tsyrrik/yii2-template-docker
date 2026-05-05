@@ -22,7 +22,16 @@
     },
     "autoload": {
         "psr-4": {
-            "app\\": ""
+            "app\\commands\\": "commands/",
+            "app\\controllers\\": "controllers/",
+            "app\\jobs\\": "jobs/",
+            "app\\models\\": "models/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Helper\\": "tests/_support/Helper/",
+            "tests\\": "tests/"
         }
     },
     "repositories": [

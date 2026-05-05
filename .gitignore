@@ -1,0 +1,11 @@
+/vendor/
+/tools/*/vendor/
+/runtime/
+/web/assets/
+/.env.local
+/.env.*.local
+/var/
+*.log
+.DS_Store
+/.idea/
+/.vscode/

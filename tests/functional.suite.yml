@@ -1,0 +1,6 @@
+actor: FunctionalTester
+modules:
+    enabled:
+        - Yii2:
+              configFile: 'config/web.php'
+        - \Helper\Functional

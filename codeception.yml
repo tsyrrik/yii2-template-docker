@@ -1,0 +1,12 @@
+namespace: tests
+support_dir: tests/_support
+paths:
+    tests: tests
+    output: tests/_output
+    data: tests/_data
+    support: tests/_support
+bootstrap: _bootstrap.php
+actor_suffix: Tester
+extensions:
+    enabled:
+        - Codeception\Extension\RunFailed

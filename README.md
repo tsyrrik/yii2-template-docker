@@ -1,151 +1,93 @@
 # Yii2 Basic Docker Template
 
-This repository is a template for Yii2 Basic web applications running in Docker.
+Template for Yii2 Basic web applications running in Docker.
 
-The application uses the native Yii2 Basic layout: Yii2 code lives at the repository root, and Docker configuration lives in `docker/`.
+The project uses the native Yii2 Basic layout: application code lives at the repository root, and Docker configuration lives in `docker/`.
 
-Current stack:
+## Stack
 
-- PHP-FPM 8.3 with Yii2 Basic
-- Nginx 1.27 as HTTP entrypoint
+- PHP-FPM 8.3
+- Yii2 Basic
+- Nginx 1.27
 - MySQL 8.0
 - Redis 7 for cache and sessions
 - RabbitMQ 3 management for `yii2-queue`
-- Composer dependencies managed at the repository root
-- Environment variables loaded from `.env` and optional `.env.local`
-
-Planned by the design spec:
-
-- Production override with immutable PHP runtime image
-- MySQL backup service with S3-compatible upload
-- Prometheus, Grafana, Loki monitoring stack
+- Codeception and PHPUnit
 - PHPStan, PHP-CS-Fixer, Rector, PHPat, composer-dependency-analyser
-- Codeception + PHPUnit tests
-- Demo Product CRUD and queue job
-
----
+- Optional production override
+- Optional MySQL backup service with S3-compatible upload
+- Optional Prometheus, Grafana, Loki monitoring stack
 
 ## Project Structure
 
-Implemented files:
+```text
+config/                         Yii2 web, console, db and params config
+commands/                       Console controllers
+controllers/                    Web controllers
+jobs/                           Queue jobs
+migrations/                     Yii2 migrations
+models/                         ActiveRecord models
+runtime/                        Runtime logs and cache
+tests/                          Codeception, PHPUnit and architecture tests
+views/                          Yii2 views and layout
+web/                            Public document root
+docker/                         Docker configs and service files
+docker/mysql-backup/            MySQL backup image and scripts
+docker/prometheus/              Prometheus config
+docker/grafana/                 Grafana provisioning and dashboards
+docker/loki/                    Loki config
+tools/                          Isolated Composer tools
+```
 
-- `config/` - Yii2 application configuration
-  - `web.php` - web application config
-  - `console.php` - console application config
-  - `db.php` - MySQL connection config, reads from env
-  - `params.php` - application params
-- `web/index.php` - web entrypoint, loads `.env` and `.env.local`
-- `yii` - console entrypoint, loads `.env` and `.env.local`
-- `migrations/` - Yii2 migrations
-- `runtime/` - logs and cache, ignored by git except placeholders
-- `web/assets/` - published Yii2 assets, ignored by git except placeholder
-- `docker/`
-  - `php/` - PHP-FPM Dockerfile and config files
-  - `nginx/` - Nginx config and vhost
-  - `mysql/` - MySQL config and init SQL
-  - `generate-secrets.sh` - helper for local secret generation
-  - `verify-prod-env.sh` - production secret guard
+Main files:
+
+- `yii` - console entrypoint
+- `web/index.php` - web entrypoint
 - `docker-compose.yml` - development stack
-- `.env` - committed defaults and placeholders
+- `docker-compose.prod.yml` - production override
+- `docker-compose.monitoring.yml` - monitoring override
+- `Makefile` - command shortcuts
+- `.env` - committed defaults
 - `.env.local` - local secrets, ignored by git
-- `composer.json` / `composer.lock` - Yii2 dependencies
-
-Planned files from `docs/superpowers/specs/2026-05-05-yii2-template-docker-design.md`:
-
-- `controllers/`, `models/`, `views/`
-- `jobs/`, `commands/`
-- `tests/`
-- `Makefile`
-- `docker-compose.prod.yml`
-- `docker-compose.monitoring.yml`
-- `docker/mysql-backup/`
-- `docker/prometheus/`, `docker/grafana/`, `docker/loki/`
-- code quality config files
-
----
-
-## Docker Stack
-
-Core services are defined in `docker-compose.yml`.
-
-- `php` - PHP 8.3 FPM
-  - Built from `docker/php/Dockerfile`
-  - Dev target includes Xdebug
-  - Uses `HOST_UID` / `HOST_GID` build args to map `www-data` to the host user
-  - Working directory: `/var/www/app`
-  - Mounts the repository root as `/var/www/app`
-- `nginx` - Nginx 1.27 Alpine
-  - Configured via `docker/nginx/nginx.conf` and `docker/nginx/conf.d/app.conf`
-  - Proxies PHP requests to `php:9000`
-  - Exposes `127.0.0.1:${APP_HTTP_PORT:-8080}`
-  - `/fpm-ping` is used for health checks
-- `db` - MySQL 8.0
-  - Data volume: `db-data`
-  - Config: `docker/mysql/my.cnf`
-  - Init SQL: `docker/mysql/init.sql`
-  - Exposes `127.0.0.1:${APP_DB_PORT:-3306}`
-- `redis` - Redis 7 Alpine
-  - Used by Yii2 cache and sessions
-  - `maxmemory` is controlled by `APP_REDIS_MEMORY_LIMIT`
-  - Exposes `127.0.0.1:${APP_REDIS_PORT:-6379}`
-- `rabbitmq` - RabbitMQ 3 management Alpine
-  - Used by `yiisoft/yii2-queue`
-  - AMQP port: `127.0.0.1:${APP_RABBITMQ_PORT:-5672}`
-  - Management UI: `127.0.0.1:${APP_RABBITMQ_MGMT_PORT:-15672}`
-
-Security defaults:
-
-- `security_opt: no-new-privileges:true` is used for application services.
-- `cap_drop: ALL` is used for `php` and `nginx`; `nginx` gets only the capabilities it needs back.
-- MySQL and RabbitMQ do not use `cap_drop: ALL`, because their entrypoints can break under that restriction.
-
----
 
 ## Quick Start
 
-Install dependencies if `vendor/` is missing:
+Install dependencies:
 
 ```bash
 composer install
+composer bin all install
 ```
 
 Build and start the development stack:
 
 ```bash
-docker compose up -d --build
+make up
 ```
 
-Check containers:
+Open the app:
+
+```text
+http://127.0.0.1:8080/
+```
+
+Useful checks:
 
 ```bash
 docker compose ps
-```
-
-Run Yii console inside PHP:
-
-```bash
+curl http://127.0.0.1:8080/fpm-ping
 docker compose exec php php yii help
 ```
 
-Check PHP-FPM through Nginx:
-
-```bash
-curl http://127.0.0.1:8080/fpm-ping
-```
-
-Expected response:
+Expected FPM ping response:
 
 ```text
 pong
 ```
 
-At the moment, `/` may return `500` until `controllers/SiteController.php` and the Yii2 views are added. The infrastructure itself is already able to serve PHP through Nginx.
-
----
-
 ## Environment
 
-Committed defaults live in `.env`. Local secrets should go into `.env.local`.
+Committed defaults live in `.env`. Put local secrets into `.env.local`.
 
 Important variables:
 
@@ -179,154 +121,251 @@ APP_RABBITMQ_PORT=5672
 APP_RABBITMQ_MGMT_PORT=15672
 ```
 
+Generate local secret values:
+
+```bash
+make gen-secrets
+```
+
+Then place generated values in `.env.local`.
+
 Values with spaces must be quoted for `vlucas/phpdotenv`, for example:
 
 ```dotenv
 MYSQL_BACKUP_CRON="17 3 * * *"
 ```
 
-Generate local secrets:
+## Docker Services
+
+Development services are defined in `docker-compose.yml`.
+
+- `php` - PHP 8.3 FPM, built from `docker/php/Dockerfile`
+- `nginx` - HTTP entrypoint, proxies PHP requests to `php:9000`
+- `db` - MySQL 8.0 with config from `docker/mysql/my.cnf`
+- `redis` - Yii2 cache and sessions
+- `rabbitmq` - queue broker and management UI
+
+Security defaults:
+
+- `security_opt: no-new-privileges:true` is used for application services.
+- `cap_drop: ALL` is used where the image entrypoint supports it.
+- Published service ports are bound to `127.0.0.1` by default.
+
+## Yii2 Commands
+
+Run Yii commands inside the PHP container:
 
 ```bash
-sh docker/generate-secrets.sh
+make yii CMD="help"
+make yii CMD="cache/index"
 ```
 
-Then place the generated values in `.env.local`.
-
----
-
-## Yii2 Application
-
-### Entrypoints
-
-- Web: `web/index.php`
-- Console: `yii`
-
-Both entrypoints load Composer autoload first, then `.env` and `.env.local`, then Yii.
-
-### Database
-
-DB config is in `config/db.php`:
-
-```php
-return [
-    'class' => 'yii\db\Connection',
-    'dsn' => sprintf(
-        'mysql:host=%s;port=%s;dbname=%s',
-        $_ENV['DB_HOST'] ?? 'db',
-        $_ENV['DB_PORT'] ?? '3306',
-        $_ENV['DB_NAME'] ?? 'app',
-    ),
-    'username' => $_ENV['DB_USER'] ?? 'app',
-    'password' => $_ENV['DB_PASSWORD'] ?? '',
-    'charset' => 'utf8mb4',
-];
-```
-
-Run migrations:
+Migrations:
 
 ```bash
-docker compose exec php php yii migrate --interactive=0
-```
-
-Show migration history:
-
-```bash
+make migrate
+make migrate-up N=1
+make migrate-down N=1
+docker compose exec php php yii migrate/create create_example_table
 docker compose exec php php yii migrate/history --interactive=0
 ```
 
-Create a migration:
+Redis cache:
 
 ```bash
-docker compose exec php php yii migrate/create create_product_table
+make cache-flush
+make redis-cli
 ```
 
-Rollback one migration:
+RabbitMQ queue:
 
 ```bash
-docker compose exec php php yii migrate/down 1 --interactive=0
+make worker
+make queue-run
+docker compose exec php php yii queue-demo/product-created 1
 ```
 
-### Redis
+For multiple queues, define multiple Yii queue components and run them as separate console commands.
 
-Redis is configured as a shared Yii2 component in `config/web.php` and `config/console.php`.
+## Demo App
 
-Cache:
+The template includes a small Product example:
 
-```php
-'cache' => [
-    'class' => \yii\redis\Cache::class,
-],
-```
+- `models/Product.php`
+- `controllers/ProductController.php`
+- `migrations/m000000_000000_create_product_table.php`
+- `jobs/ProductCreatedJob.php`
+- `commands/QueueDemoController.php`
+- `views/product/*`
 
-Session storage:
+Routes:
 
-```php
-'session' => [
-    'class' => \yii\redis\Session::class,
-],
-```
+- `/` - home page
+- `/product` - Product list
+- `/product/create` - create Product
+- `/product/view?id=1` - view Product
+- `/product/update?id=1` - update Product
 
-Check registered caches:
+## Makefile
+
+Main targets:
 
 ```bash
-docker compose exec php php yii cache/index
+make up
+make down
+make restart
+make ps
+make logs
+make php
+make yii CMD="..."
+make composer-install
+make migrate
+make migrate-up N=1
+make migrate-down N=1
+make worker
+make queue-run
+make cache-flush
+make redis-cli
+make cs-fix
+make cs-check
+make phpstan
+make rector
+make rector-dry
+make phpat
+make dep-analyse
+make test
+make test-unit
+make test-functional
+make gen-secrets
+make verify-prod-env
+make up-prod
+make build-prod
+make up-monitoring
+make down-monitoring
+make backup-prod-now
+make kics
 ```
 
-Flush Redis DB:
+## Code Quality And Tests
+
+Tools are installed through `bamarni/composer-bin-plugin` into `tools/`.
+
+Install all isolated tools:
 
 ```bash
-docker compose exec redis redis-cli FLUSHDB
+composer bin all install
 ```
 
-### RabbitMQ Queue
-
-Queue package:
-
-```text
-yiisoft/yii2-queue
-enqueue/amqp-lib
-```
-
-Configured component:
-
-```php
-'queue' => [
-    'class' => \yii\queue\amqp_interop\Queue::class,
-    'driver' => \yii\queue\amqp_interop\Queue::ENQUEUE_AMQP_LIB,
-    'dsn' => sprintf(
-        'amqp://%s:%s@%s:%s/%s',
-        $_ENV['RABBITMQ_USER'] ?? 'app',
-        $_ENV['RABBITMQ_PASSWORD'] ?? '',
-        $_ENV['RABBITMQ_HOST'] ?? 'rabbitmq',
-        $_ENV['RABBITMQ_PORT'] ?? '5672',
-        $_ENV['RABBITMQ_VHOST'] ?? '%2F',
-    ),
-    'queueName' => $_ENV['RABBITMQ_QUEUE'] ?? 'default',
-],
-```
-
-The queue is bootstrapped in `config/console.php`, so console commands are available:
+Run checks:
 
 ```bash
-docker compose exec php php yii help queue/listen
-docker compose exec php php yii queue/listen --verbose=1
+make cs-check
+make phpstan
+make phpat
+make dep-analyse
+make test-unit
 ```
 
-For a template with multiple queues, add multiple queue components and run them as separate console commands.
+Run formatters/refactoring:
 
----
+```bash
+make cs-fix
+make rector-dry
+make rector
+```
+
+Codeception:
+
+```bash
+docker compose exec php vendor/bin/codecept build
+docker compose exec php vendor/bin/codecept run unit
+```
+
+## Production
+
+Production services are defined through `docker-compose.prod.yml`.
+
+The PHP image uses the `prod` Dockerfile target:
+
+- no Xdebug
+- no bind-mounted source code
+- dependencies installed with `composer install --no-dev`
+- optimized Composer autoload
+- immutable runtime copied from the build stage
+
+Before production usage:
+
+```bash
+make verify-prod-env
+make build-prod
+make up-prod
+make migrate
+```
+
+Override all placeholder secrets in `.env.local` before running production services.
+
+## MySQL Backups
+
+The production override includes `mysql-backup`.
+
+Backup files are created with `mysqldump`, compressed with `gzip`, and can be uploaded to S3-compatible storage.
+
+Manual backup:
+
+```bash
+make backup-prod-now
+```
+
+Important variables:
+
+```dotenv
+MYSQL_BACKUP_CRON="17 3 * * *"
+MYSQL_BACKUP_RETENTION_DAYS=7
+MYSQL_BACKUP_S3_ENABLED=0
+MYSQL_BACKUP_S3_BUCKET=
+MYSQL_BACKUP_S3_PREFIX=mysql
+MYSQL_BACKUP_S3_ENDPOINT=
+MYSQL_BACKUP_S3_REGION=us-east-1
+MYSQL_BACKUP_S3_ACCESS_KEY=
+MYSQL_BACKUP_S3_SECRET_KEY=
+```
+
+## Monitoring
+
+Start the optional monitoring stack:
+
+```bash
+make up-monitoring
+```
+
+Stop it:
+
+```bash
+make down-monitoring
+```
+
+Services:
+
+- Prometheus
+- Grafana
+- Loki
+- MySQL exporter
+- Redis exporter
+- RabbitMQ exporter
+- PHP-FPM exporter
+
+Grafana is exposed on `127.0.0.1:${APP_GRAFANA_PORT:-3000}`.
 
 ## Dockerfile
 
-The PHP image uses a multi-stage Dockerfile:
+The PHP image uses four stages:
 
 - `php-base` - system dependencies, Composer, PHP extensions, PHP-FPM config
 - `dev` - Xdebug and host UID/GID mapping
 - `build` - production dependency install, optimized autoload, `php yii help` smoke check
 - `prod` - runtime image copied from `build`
 
-Installed PHP extensions in the current Dockerfile:
+Installed PHP extensions:
 
 ```text
 pdo_mysql
@@ -337,124 +376,30 @@ gd
 zip
 bcmath
 sockets
+amqp
 redis
 xdebug in dev only
 ```
 
-The design spec mentions `amqp`, but the current queue driver uses `enqueue/amqp-lib`, which can work through PHP libraries without `ext-amqp`.
+The RabbitMQ queue driver uses `enqueue/amqp-lib`; `ext-amqp` is also installed in the PHP image for projects that need native AMQP support.
 
----
+## Verification
 
-## Useful Commands
-
-Current direct commands:
-
-```bash
-docker compose up -d --build
-docker compose down
-docker compose ps
-docker compose exec php bash
-docker compose exec php php yii help
-docker compose exec php php yii migrate --interactive=0
-docker compose exec php php yii migrate/up 1 --interactive=0
-docker compose exec php php yii migrate/down 1 --interactive=0
-docker compose exec php php yii queue/listen --verbose=1
-docker compose exec php php yii cache/index
-docker compose exec redis redis-cli FLUSHDB
-composer validate --strict
-```
-
-Planned Makefile targets:
-
-```bash
-make up
-make up-prod
-make up-monitoring
-make php
-make yii CMD="..."
-make migrate
-make migrate-up N=1
-make migrate-down N=1
-make worker
-make queue-run
-make cache-flush
-make redis-cli
-make message
-make composer-install
-make cs-fix
-make phpstan
-make rector
-make gen-secrets
-make kics
-make backup-prod-now
-```
-
----
-
-## Tooling
-
-Root dependencies currently include:
-
-- `yiisoft/yii2`
-- `yiisoft/yii2-redis`
-- `yiisoft/yii2-queue`
-- `enqueue/amqp-lib`
-- `yiisoft/yii2-symfonymailer`
-- `vlucas/phpdotenv`
-- `bamarni/composer-bin-plugin`
-- `codeception/codeception`
-- `codeception/module-yii2`
-- `codeception/module-asserts`
-
-Planned isolated tools under `tools/`:
-
-- PHPStan
-- PHP-CS-Fixer
-- Rector
-- PHPat
-- composer-dependency-analyser
-
----
-
-## Production And Monitoring
-
-The design spec includes:
-
-- `docker-compose.prod.yml`
-- `docker/mysql-backup/`
-- `docker-compose.monitoring.yml`
-- `docker/prometheus/`
-- `docker/grafana/`
-- `docker/loki/`
-
-These files are not implemented yet in the current repository state.
-
-Before production usage:
-
-- Override all placeholder secrets in `.env.local`.
-- Keep DB/RabbitMQ/Redis ports bound to `127.0.0.1` or remove host port publishing.
-- Run `docker/verify-prod-env.sh prod`.
-- Build the `prod` Dockerfile target.
-- Run migrations explicitly.
-
----
-
-## Current Verification
-
-The following checks pass in the current repository state:
+Current checks used for this repository:
 
 ```bash
 composer validate --strict
-php yii help
 docker compose config --quiet
-docker compose build php
-docker compose up -d
-docker compose exec -T php php yii help
-docker compose exec -T php php yii cache/index
-docker compose exec -T php php yii help queue/listen
-curl http://127.0.0.1:8080/fpm-ping
+docker compose -f docker-compose.yml -f docker-compose.prod.yml config --quiet
+docker compose -f docker-compose.yml -f docker-compose.monitoring.yml config --quiet
+docker compose exec -T php php yii migrate --interactive=0
+docker compose exec -T php vendor/bin/codecept run unit
+docker compose exec -T php php tools/phpstan/vendor/bin/phpstan analyse -c phpstan.neon.dist --no-progress
+docker compose exec -T php php tools/php-cs-fixer/vendor/bin/php-cs-fixer fix --dry-run --diff --using-cache=no --sequential
+docker compose exec -T php php tools/phpat/vendor/bin/phpstan analyse -c phpat.neon.dist --no-progress
+docker compose exec -T php php tools/composer-dependency-analyser/vendor/bin/composer-dependency-analyser --composer-json composer.json --config composer-dependency-analyser.php
+docker compose exec -T php php yii queue-demo/product-created 1
+curl http://127.0.0.1:8080/
+curl http://127.0.0.1:8080/product
+docker compose -f docker-compose.yml -f docker-compose.prod.yml build php
 ```
-
-Known current gap:
-
-- `GET /` returns `500` until `SiteController` and web views are added.

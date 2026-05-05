@@ -1,4 +1,6 @@
 {
+    "name": "app/yii2-template-docker",
+    "description": "Yii2 Basic Docker template with MySQL, Redis, RabbitMQ, monitoring, and code quality tooling.",
     "type": "project",
     "license": "proprietary",
     "minimum-stability": "stable",
@@ -23,6 +25,12 @@
             "app\\": ""
         }
     },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://asset-packagist.org"
+        }
+    ],
     "config": {
         "allow-plugins": {
             "yiisoft/yii2-composer": true,

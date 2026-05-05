@@ -66,6 +66,10 @@ services:
 
   nginx:
     <<: *security-defaults
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
     image: nginx:1.27-alpine
     restart: unless-stopped
     depends_on:

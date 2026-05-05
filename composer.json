@@ -1,0 +1,40 @@
+{
+    "type": "project",
+    "license": "proprietary",
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "require": {
+        "php": "^8.3",
+        "yiisoft/yii2": "^2.0",
+        "yiisoft/yii2-redis": "^2.0",
+        "yiisoft/yii2-queue": "^2.3",
+        "enqueue/amqp-lib": "^0.10",
+        "yiisoft/yii2-symfonymailer": "^4.0",
+        "vlucas/phpdotenv": "^5.6"
+    },
+    "require-dev": {
+        "bamarni/composer-bin-plugin": "^1.8",
+        "codeception/codeception": "^5.0",
+        "codeception/module-yii2": "^1.0",
+        "codeception/module-asserts": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "app\\": ""
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "yiisoft/yii2-composer": true,
+            "bamarni/composer-bin-plugin": true
+        },
+        "sort-packages": true
+    },
+    "extra": {
+        "bamarni-bin": {
+            "bin-links": false,
+            "target-directory": "tools",
+            "forward-command": true
+        }
+    }
+}
